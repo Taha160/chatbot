@@ -1,5 +1,12 @@
 import { useState } from 'react'
+import Groq from "groq-sdk"
 import './App.css'
+
+
+const groq = new Groq({
+  apiKey: import.meta.env.VITE_GROQ_API_KEY,
+  dangerouslyAllowBrowser: true 
+})
 
 function MessageBubble({ text, isUser }) {
   return (
@@ -31,46 +38,35 @@ function App() {
     setLoading(true)
 
     try {
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${import.meta.env.VITE_GEMINI_API_KEY}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
+      const history = messages.map(msg =>({
+        role: msg.isUser ? "user" : "assistant",
+        content : msg.text
+      }));
+      const chatCompletion = await groq.chat.completions.create({
+        messages: [
+          {
+            role: "system",
+            content: "Sen bir sohbet asistanısın ve benimle arkadaş gibi konuşmalısın. Türkçe konuş ve sohbeti çok uzatma."
           },
-          body: JSON.stringify({
-            contents: [
-              {
-                parts: [
-                  {
-                    text: `Sen bir sohbet asistanısın ve benimle arkadaş gibi konuşmalısın. Türkçe konuş.\nMesaj: ${userText}`,
-                  },
-                ],
-              },
-            ],
-          }),
-        }
-      )
+          ...history,
+          {
+            role: "user",
+            content: userText
+          }
+        ],
+        model: "llama-3.3-70b-versatile",
+      })
 
-      const data = await res.json()
-
-      if (!res.ok) {
-        console.error('API Hatası:', data)
-        throw new Error(data?.error?.message || 'Gemini API error')
-      }
-
-      const botText =
-        data?.candidates?.[0]?.content?.parts?.[0]?.text ||
-        'Cevap alınamadı '
-
+      
+      const botText = chatCompletion.choices[0]?.message?.content || "Cevap alınamadı."
       setMessages((prev) => [...prev, { text: botText, isUser: false }])
+
     } catch (err) {
-      console.error('Hata Detayı:', err)
+      console.error('Groq taraflı hata', err)
       setMessages((prev) => [
         ...prev,
         {
-          text:
-            'Bir hata oldu   API key veya model erişimi sıkıntılı olabilir.',
+          text: 'Groq bağlantısında bir sorun oldu. Lütfen keyi kontrol et.',
           isUser: false,
         },
       ])
@@ -83,10 +79,10 @@ function App() {
     <div className="flex flex-col h-screen bg-[#e5ddd5] font-sans">
       <div className="bg-[#075e54] text-white p-4 flex items-center gap-3 shadow-md">
         <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-xl">
-          🤖
+          😎
         </div>
         <div>
-          <h1 className="font-bold text-base m-0">Gemini Kanka</h1>
+          <h1 className="font-bold text-base m-0">AI DOSTUM CANO</h1>
           <p className="text-[10px] opacity-80 m-0">
             {loading ? 'Yazıyor...' : 'Çevrimiçi'}
           </p>
@@ -100,13 +96,13 @@ function App() {
 
         {loading && (
           <div className="text-xs text-gray-500 italic ml-2">
-            Kanka düşünüyor...
+            Cano düşünüyor...
           </div>
         )}
 
         {messages.length === 0 && (
           <div className="text-gray-500 text-center text-sm mt-20 bg-white/50 p-4 rounded-lg mx-10">
-            Selam kanka! Gemini burada. Yaz bakalım.
+            Selam! CANO muhabbetin belini kırmaya hazır mısın?
           </div>
         )}
       </div>
@@ -128,7 +124,7 @@ function App() {
             loading ? 'bg-gray-400' : 'bg-[#00a884]'
           }`}
         >
-          <span className="text-white text-xl">🚀</span>
+          <span className="text-white text-xl">➤</span>
         </button>
       </div>
     </div>
