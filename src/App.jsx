@@ -79,7 +79,7 @@ function App() {
     <div className="flex flex-col h-screen bg-[#e5ddd5] font-sans">
       <div className="bg-[#075e54] text-white p-4 flex items-center gap-3 shadow-md">
         <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-xl">
-          😎
+          <img src="src/assets/enes.jpeg" alt="" className='border-1 rounded-full w-full h-full' />
         </div>
         <div>
           <h1 className="font-bold text-base m-0">AI DOSTUM CANO</h1>
